@@ -1,17 +1,22 @@
 const express = require('express');
 const axios = require('axios');
-const cors = require('cors'); // ✅ Enable CORS
+const cors = require('cors');
 
 const app = express();
-app.use(cors()); // ✅ Allow Wix or any frontend to call the API
+app.use(cors());
 app.use(express.json());
 
 const VOIP_USERNAME = process.env.VOIP_USERNAME;
 const VOIP_PASSWORD = process.env.VOIP_PASSWORD;
 const VOIP_DID = process.env.VOIP_DID;
+const ACCESS_TOKEN = process.env.ACCESS_TOKEN;  // ✅ Store secret token in env vars
 
 app.post('/send-sms', async (req, res) => {
-  const { toNumber, message } = req.body;
+  const { toNumber, message, token } = req.body;
+
+  if (token !== ACCESS_TOKEN) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
 
   if (!toNumber || !message) {
     return res.status(400).json({ error: "Missing toNumber or message" });
@@ -35,6 +40,5 @@ app.post('/send-sms', async (req, res) => {
   }
 });
 
-// ✅ FIX: Make sure Render uses the correct port
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Proxy running on port ${PORT}`));
